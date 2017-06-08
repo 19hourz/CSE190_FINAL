@@ -589,9 +589,12 @@ public:
 #include "Shader.h"
 #include "CrystalBody.h"
 #include "CrystalArm.h"
-#include "rpc/client.h"
+//#include "rpc/client.h"
 #include <iostream>
 #include <string>
+#include <Eigen/Geometry>
+#include <Eigen/Dense>
+#include <cmath>
 using std::string;
 #define VERTEX_SHADER_PATH ".\\shader.vert"
 #define FRAGMENT_SHADER_PATH ".\\shader.frag"
@@ -782,6 +785,7 @@ protected:
 		cb1 = new CrystalBody();
 		cm1l = new CrystalArm();
 		cm1r = new CrystalArm();
+		cube = new Cube();
 }
 
 	void onKey(int key, int scancode, int action, int mods) override {
@@ -863,15 +867,31 @@ protected:
 			const auto& vp = _sceneLayer.Viewport[eye];
 			glViewport(vp.Pos.x, vp.Pos.y, vp.Size.w, vp.Size.h);
 			_sceneLayer.RenderPose[eye] = eyePoses[eye];
-			//
-			glm::mat4 v = glm::inverse(ovr::toGlm(eyePoses[eye]));
+
+			
+			Eigen::Quaternionf rt(eyePoses[eye].Orientation.w, eyePoses[eye].Orientation.x, eyePoses[eye].Orientation.y, eyePoses[eye].Orientation.z);
+			Eigen::Vector3f euler = rt.toRotationMatrix().eulerAngles(0, 1, 2);
+			glm::mat4 headRotate = glm::mat4(1.0f);
+			headRotate *= glm::rotate(mat4(1.0f), euler[0], vec3(1.0f, 0.0f, 0.0f));
+			headRotate *= glm::rotate(mat4(1.0f), euler[1], vec3(0.0f, 1.0f, 0.0f));
+			headRotate *= glm::rotate(mat4(1.0f), euler[2], vec3(0.0f, 0.0f, 1.0f));
+			//rightbeam = glm::translate(mat4(1.0f), vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z)) * rightrotate * glm::scale(mat4(1.0f), vec3(0.005, 0.005, -50));
+			
+			//glm::mat4 v = glm::inverse(ovr::toGlm(eyePoses[eye]));
+			cout << displace.x << endl;
+			glm::mat4 normal_v = glm::inverse(headRotate);
+			glm::mat4 v = glm::inverse(glm::translate(glm::mat4(1.0f), startpos + vec3(0.0f, 0.0f, 0.0f) + displace) * headRotate);
 			glm::vec3 eyepos = glm::make_vec3(&eyePoses[eye].Position.x);
 			glm::mat4 t = glm::translate(glm::mat4(1.0f), startpos+displace);
+			//glm::mat4 t = mat4(1.0f);
+
 			glm::mat4 leftarm = glm::translate(glm::mat4(1.0f), glm::vec3(-0.3, -0.25, 0.0));
 			glm::mat4 rightarm = glm::translate(glm::mat4(1.0f), glm::vec3(0.3, -0.25, 0.0));
+			glm::mat4 cubePos = glm::scale(mat4(1.0f),vec3(0.2,0.2,0.2)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.3, 0.0, -1.0));
 			cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
 			cm1l->draw(shaderProgram, v * leftarm * t, _eyeProjections[eye]);
 			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);
+			cube->draw(shaderProgram, normal_v * cubePos , _eyeProjections[eye]);
 		});
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

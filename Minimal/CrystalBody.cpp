@@ -94,6 +94,7 @@ void CrystalBody::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
     glBindVertexArray(0);
 }
 
+
 void CrystalBody::update()
 {
 }
