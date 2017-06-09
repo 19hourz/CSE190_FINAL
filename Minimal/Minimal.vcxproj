@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClCompile Include="CrystalArm.cpp" />
     <ClCompile Include="CrystalBody.cpp" />
+    <ClCompile Include="CrystalSoldier.cpp" />
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="CrystalArm.h" />
     <ClInclude Include="CrystalBody.h" />
+    <ClInclude Include="CrystalSoldier.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>

@@ -98,3 +98,9 @@ void CrystalArm::update()
 {
     //keep still
 }
+
+void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 rotate) {
+
+	toWorld = rotate * pos;
+
+}

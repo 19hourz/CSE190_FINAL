@@ -589,6 +589,7 @@ public:
 #include "Shader.h"
 #include "CrystalBody.h"
 #include "CrystalArm.h"
+#include "CrystalSoldier.h"
 //#include "rpc/client.h"
 #include <iostream>
 #include <string>
@@ -647,11 +648,16 @@ public:
 	glm::mat4 projection, headPose[2];
 	GLuint leftwireVAO, leftwireVBO;
 	//variables for final projects
+	double displayMidpointSeconds = 0.0;
+	ovrPosef leftHandPose;
+	ovrPosef rightHandPose;
 	glm::vec3 startpos = glm::vec3(0.5f,0.0f,0.5f);
 	glm::vec3 displace = glm::vec3(0.0f,0.0f,0.0f);
 	CrystalBody *cb1;
 	CrystalArm *cm1l;
 	CrystalArm *cm1r;
+	CrystalSoldier *soldier1;
+
 	RiftApp() {
 		using namespace ovr;
 		RiftApp::buttonA_status = 0;
@@ -786,6 +792,7 @@ protected:
 		cm1l = new CrystalArm();
 		cm1r = new CrystalArm();
 		cube = new Cube();
+		soldier1 = new CrystalSoldier(startpos);
 }
 
 	void onKey(int key, int scancode, int action, int mods) override {
@@ -798,47 +805,7 @@ protected:
 		GlfwApp::onKey(key, scancode, action, mods);
 	}
 
-	glm::mat4 setProjection(const glm::vec3 pa, const glm::vec3 pb, const glm::vec3 pc, const glm::vec3 pe, float n, float f) {
-		glm::vec3  va, vb, vc;
-		glm::vec3  vr, vu, vn;
-		float l, r, b, t, d, M[16];
-		glm::mat4 result = glm::mat4(1.0f);
-		// Compute an orthonormal basis for the screen.
-
-		vr = pb - pa;
-		vu = pc - pa;
-		vr = glm::normalize(vr);
-		vu = glm::normalize(vu);
-		vn = glm::cross(vr, vu);
-		vn = glm::normalize(vn);
-
-		// Compute the screen corner vectors.
-
-		va = pa - pe;
-		vb = pb - pe;
-		vc = pc - pe;
-
-		// Find the distance from the eye to screen plane.
-
-		d = -glm::dot(va, vn);
-
-		// Find the extent of the perpendicular projection.
-
-		l = glm::dot(vr, va) * n / d;
-		r = glm::dot(vr, vb) * n / d;
-		b = glm::dot(vu, va) * n / d;
-		t = glm::dot(vu, vc) * n / d;
-		result = glm::frustum(l, r, b, t, n, f);
-		memset(M, 0, 16 * sizeof(float));
-		M[0] = vr[0]; M[4] = vr[1]; M[8] = vr[2];
-		M[1] = vu[0]; M[5] = vu[1]; M[9] = vu[2];
-		M[2] = vn[0]; M[6] = vn[1]; M[10] = vn[2];
-		M[15] = 1.0f;
-		glm::mat4 mt = glm::mat4(vr[0],vu[0],vn[0],0.0f,vr[1],vu[1],vn[1],0.0f,vr[2],vu[2],vn[2],0.0f,0.0f,0.0f,0.0f,1.0f);
-		result = result * mt;
-		result = result * glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -pe[0], -pe[1], -pe[2], 1.0f);
-		return result;
-	}
+	
 
 	glm::mat4 fromGLfloat16(GLfloat temp[]) {
 		return glm::mat4(temp[0], temp[1], temp[2], temp[3], temp[4], temp[5], temp[6], temp[7], temp[8], temp[9], temp[10], temp[11], temp[12], temp[13], temp[14], temp[15]);
@@ -868,13 +835,15 @@ protected:
 			glViewport(vp.Pos.x, vp.Pos.y, vp.Size.w, vp.Size.h);
 			_sceneLayer.RenderPose[eye] = eyePoses[eye];
 
-			
+			//Head Tracking
 			Eigen::Quaternionf rt(eyePoses[eye].Orientation.w, eyePoses[eye].Orientation.x, eyePoses[eye].Orientation.y, eyePoses[eye].Orientation.z);
 			Eigen::Vector3f euler = rt.toRotationMatrix().eulerAngles(0, 1, 2);
 			glm::mat4 headRotate = glm::mat4(1.0f);
 			headRotate *= glm::rotate(mat4(1.0f), euler[0], vec3(1.0f, 0.0f, 0.0f));
 			headRotate *= glm::rotate(mat4(1.0f), euler[1], vec3(0.0f, 1.0f, 0.0f));
 			headRotate *= glm::rotate(mat4(1.0f), euler[2], vec3(0.0f, 0.0f, 1.0f));
+			glm::mat4 yheadRotate = glm::mat4(1.0f);
+			yheadRotate = glm::rotate(mat4(1.0f), -euler[1], vec3(0.0f, 1.0f, 0.0f));
 			//rightbeam = glm::translate(mat4(1.0f), vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z)) * rightrotate * glm::scale(mat4(1.0f), vec3(0.005, 0.005, -50));
 			
 			//glm::mat4 v = glm::inverse(ovr::toGlm(eyePoses[eye]));
@@ -888,10 +857,25 @@ protected:
 			glm::mat4 leftarm = glm::translate(glm::mat4(1.0f), glm::vec3(-0.3, -0.25, 0.0));
 			glm::mat4 rightarm = glm::translate(glm::mat4(1.0f), glm::vec3(0.3, -0.25, 0.0));
 			glm::mat4 cubePos = glm::scale(mat4(1.0f),vec3(0.2,0.2,0.2)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.3, 0.0, -1.0));
-			cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
+			
+
+			//Hands Tracking
+			ovrTrackingState trackState = ovr_GetTrackingState(_session, displayMidpointSeconds, ovrTrue);
+			leftHandPose = trackState.HandPoses[ovrHand_Left].ThePose;
+			rightHandPose = trackState.HandPoses[ovrHand_Right].ThePose;
+			glm::vec3 leftEndPoint = glm::vec3(leftHandPose.Position.x, leftHandPose.Position.y, leftHandPose.Position.z);
+			glm::vec3 rightEndPoint = glm::vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z);
+			
+
+			//Drawing
+			/*cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
 			cm1l->draw(shaderProgram, v * leftarm * t, _eyeProjections[eye]);
 			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);
-			cube->draw(shaderProgram, normal_v * cubePos , _eyeProjections[eye]);
+			cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);*/
+			soldier1->moveSoldier(displace);
+			soldier1->rotateSoldier(yheadRotate);
+			soldier1->rotateArm(leftEndPoint, rightEndPoint);
+			soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
 		});
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
