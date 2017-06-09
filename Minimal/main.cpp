@@ -651,6 +651,7 @@ public:
 	double displayMidpointSeconds = 0.0;
 	ovrPosef leftHandPose;
 	ovrPosef rightHandPose;
+	glm::vec3 lastLeftEndPoint, lastRightEndPoint;
 	glm::vec3 startpos = glm::vec3(0.5f,0.0f,0.5f);
 	glm::vec3 displace = glm::vec3(0.0f,0.0f,0.0f);
 	CrystalBody *cb1;
@@ -788,6 +789,9 @@ protected:
 		shaderProgram = LoadShaders(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
 		wireProgram = LoadShaders(leftwireVertexPath, leftwireFragPath);
 		quadProgram = LoadShaders(quadVertexPath, quadFragPath);
+
+		lastLeftEndPoint = vec3(-0.3f, 1.0f, 0.0f);
+		lastRightEndPoint = vec3(0.3f, 1.0f, 0.0f);
 		cb1 = new CrystalBody();
 		cm1l = new CrystalArm();
 		cm1r = new CrystalArm();
@@ -847,7 +851,7 @@ protected:
 			//rightbeam = glm::translate(mat4(1.0f), vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z)) * rightrotate * glm::scale(mat4(1.0f), vec3(0.005, 0.005, -50));
 			
 			//glm::mat4 v = glm::inverse(ovr::toGlm(eyePoses[eye]));
-			cout << displace.x << endl;
+			
 			glm::mat4 normal_v = glm::inverse(headRotate);
 			glm::mat4 v = glm::inverse(glm::translate(glm::mat4(1.0f), startpos + vec3(0.0f, 0.0f, 0.0f) + displace) * headRotate);
 			glm::vec3 eyepos = glm::make_vec3(&eyePoses[eye].Position.x);

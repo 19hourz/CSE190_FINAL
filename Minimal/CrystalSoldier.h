@@ -21,6 +21,7 @@
 #endif
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 #include "CrystalBody.h"
 #include "CrystalArm.h"
 
@@ -36,7 +37,9 @@ public:
 	CrystalBody *body;
 	vec3 initPos;
 	mat4 displaceTrans;
-	mat4 rotateTrans;
+	mat4 headRotate, lArmRotate, rArmRotate, rScale, lScale;
+	vec3 initLPoint, initRPoint, initLArm, initRArm;
+
 	glm::mat4 leftArmTrans, rightArmTrans;
 
 

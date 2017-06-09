@@ -10,6 +10,8 @@
 
 #include "CrystalArm.h"
 
+using namespace glm;
+
 CrystalArm::CrystalArm()
 {
     toWorld = glm::mat4(1.0f);
@@ -99,8 +101,8 @@ void CrystalArm::update()
     //keep still
 }
 
-void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 rotate) {
+void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 headRotate, mat4 armRotate, mat4 scale) {
 
-	toWorld = rotate * pos;
+	toWorld = headRotate * pos * armRotate;
 
 }
