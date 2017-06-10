@@ -22,10 +22,10 @@ CrystalSoldier::CrystalSoldier(vec3 pos)
 	rArm = new CrystalArm();
 	lArm = new CrystalArm();
 	body = new CrystalBody();
-	initLPoint = vec3(0.1, -0.25, 0.3);
-	initRPoint = vec3(-0.1, -0.25, 0.3);
-	initLArm = vec3(0.3f, 1.0f, 0.0f) - initLPoint;
-	initRArm = vec3(-0.3f, 1.0f, 0.0f) - initRPoint;
+	initLPoint = vec3(-0.2f, -0.25f, -0.1f);
+	initRPoint = vec3(0.2f, -0.25f, -0.1f);
+	initLArm = vec3(-0.2f, 1.0f, 0.0f) -initLPoint;
+	initRArm = vec3(0.2f, 1.0f, 0.0f) -initRPoint;
 	
 	rightArmTrans = glm::translate(glm::mat4(1.0f),initRPoint);
 	leftArmTrans = glm::translate(glm::mat4(1.0f), initLPoint);
@@ -42,10 +42,10 @@ CrystalSoldier::~CrystalSoldier()
 void CrystalSoldier::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
 {
 	body->draw(shaderProgram, V * displaceTrans * headRotate, P);
-	rArm->rotateArm(rightArmTrans, headRotate, rArmRotate, rScale);
-	rArm->draw(shaderProgram, V  * displaceTrans , P);
-	lArm->rotateArm(leftArmTrans, headRotate, lArmRotate, lScale);
-	lArm->draw(shaderProgram, V  * displaceTrans , P);
+	//rArm->rotateArm(rightArmTrans, headRotate, rArmRotate, rScale);
+	//rArm->draw(shaderProgram, V  * displaceTrans , P);
+	//lArm->rotateArm(leftArmTrans, headRotate, lArmRotate, lScale);
+	//lArm->draw(shaderProgram, V  * displaceTrans , P);
 }
 
 void CrystalSoldier::moveSoldier(vec3 displace) 

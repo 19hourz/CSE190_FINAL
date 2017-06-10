@@ -628,12 +628,6 @@ public:
 	ovrPosef RiftApp::eyePoses[2];
 	GLuint quadVAO, quadVBO;
 	Cube *cube, *skyboxl, *skyboxr, *room;
-	const GLchar* beamVertexPath = ".\\beam.vert";
-	const GLchar* beamFragPath = ".\\beam.frag";
-	const GLchar* leftwireVertexPath = ".\\fac.vert";
-	const GLchar* leftwireFragPath = ".\\fac.frag";
-	const GLchar* quadVertexPath = ".\\quad.vert";
-	const GLchar* quadFragPath = ".\\quad.frag";
 	GLint shaderProgram, wireProgram, quadProgram;
 	mat4 cubeInitPos;
 	mat4 leftQuadPos, rightQuadPos, floorQuadPos;
@@ -648,7 +642,9 @@ public:
 	glm::mat4 projection, headPose[2];
 	GLuint leftwireVAO, leftwireVBO;
 	//variables for final projects
+
 	double displayMidpointSeconds = 0.0;
+	float rotateAngle = 0.0f;
 	ovrPosef leftHandPose;
 	ovrPosef rightHandPose;
 	glm::vec3 lastLeftEndPoint, lastRightEndPoint;
@@ -787,8 +783,7 @@ protected:
 		lThumbStick_val = 1.0f;
 		freeze = false;
 		shaderProgram = LoadShaders(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
-		wireProgram = LoadShaders(leftwireVertexPath, leftwireFragPath);
-		quadProgram = LoadShaders(quadVertexPath, quadFragPath);
+
 
 		lastLeftEndPoint = vec3(-0.3f, 1.0f, 0.0f);
 		lastRightEndPoint = vec3(0.3f, 1.0f, 0.0f);
@@ -819,14 +814,15 @@ protected:
 		ovrPosef eyePoses[2];
 		ovrInputState inputState;
 		ovr_GetEyePoses(_session, frame, true, _viewScaleDesc.HmdToEyeOffset, eyePoses, &_sceneLayer.SensorSampleTime);
+		/*
 		if (OVR_SUCCESS(ovr_GetInputState(_session, ovrControllerType_Touch, &inputState))) {
 			if (inputState.Thumbstick[ovrHand_Left].x != 0) {
-				displace.x += inputState.Thumbstick[ovrHand_Left].x / 20.0f;
+				displace.x += inputState.Thumbstick[ovrHand_Left].x / 150.0f;
  			}
 			if (inputState.Thumbstick[ovrHand_Left].y != 0) {
-				displace.z += inputState.Thumbstick[ovrHand_Left].y / 20.0f;
+				displace.z -= inputState.Thumbstick[ovrHand_Left].y / 150.0f;
 			}
-		}
+		}*/
 		int curIndex;
 		ovr_GetTextureSwapChainCurrentIndex(_session, _eyeTexture, &curIndex);
 		GLuint curTexId;
@@ -846,13 +842,48 @@ protected:
 			headRotate *= glm::rotate(mat4(1.0f), euler[0], vec3(1.0f, 0.0f, 0.0f));
 			headRotate *= glm::rotate(mat4(1.0f), euler[1], vec3(0.0f, 1.0f, 0.0f));
 			headRotate *= glm::rotate(mat4(1.0f), euler[2], vec3(0.0f, 0.0f, 1.0f));
+			glm::vec4 direc = glm::vec4(0.0f,0.0f,1.0f,0.0f);
+			direc = headRotate * direc;
+			glm::vec3 d3 = glm::vec3(direc.x, 0.0f, direc.z);
+			d3 = glm::normalize(d3);
+			GLfloat d = glm::acos(glm::dot(d3,glm::vec3(0.0f,0.0f,1.0f)));
+			if (glm::dot(glm::cross(glm::vec3(0.0f, 0.0f, 1.0f),d3), glm::vec3(0.0f, 1.0f, 0.0f)) < 0) {
+				d =  - d;
+			}
 			glm::mat4 yheadRotate = glm::mat4(1.0f);
-			yheadRotate = glm::rotate(mat4(1.0f), -euler[1], vec3(0.0f, 1.0f, 0.0f));
-			//rightbeam = glm::translate(mat4(1.0f), vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z)) * rightrotate * glm::scale(mat4(1.0f), vec3(0.005, 0.005, -50));
+			yheadRotate = glm::rotate(mat4(1.0f), d, vec3(0.0f, 1.0f, 0.0f));
+
+			cout << d << endl;
+			
+			if(eye == ovrEye_Left){
+			
+				if (OVR_SUCCESS(ovr_GetInputState(_session, ovrControllerType_Touch, &inputState))) {
+					if (inputState.Thumbstick[ovrHand_Left].x != 0 || inputState.Thumbstick[ovrHand_Left].y != 0) {
+						/*
+						rotateAngle = euler[1] * (180.0f / pi<float>()) - 90.0f;
+						//cout << rotateAngle << endl;
+						mat2 rotateDisplace = mat2(cos(rotateAngle), -sin(rotateAngle), sin(rotateAngle), cos(rotateAngle));
+						cout << rotateAngle << endl;
+						vec2 temp = rotateDisplace *  vec2(inputState.Thumbstick[ovrHand_Left].x, inputState.Thumbstick[ovrHand_Left].y);
+						cout << "x: " << inputState.Thumbstick[ovrHand_Left].x << " y: " << inputState.Thumbstick[ovrHand_Left].y << endl;
+						cout << "x: " << temp.x << " y: " << temp.y << endl;
+						displace.x += temp.x / 150.0f;
+						displace.z += temp.y / 150.0f;
+						*/
+						
+						displace.x += -inputState.Thumbstick[ovrHand_Left].x * glm::sin(d) * 0.01;
+						displace.z += -inputState.Thumbstick[ovrHand_Left].x * glm::cos(d) * 0.01;
+						displace.x += -inputState.Thumbstick[ovrHand_Left].y * glm::sin(d) * 0.01;
+						displace.z += -inputState.Thumbstick[ovrHand_Left].y * glm::cos(d) * 0.01;
+					}
+				}
+			}
 			
 			//glm::mat4 v = glm::inverse(ovr::toGlm(eyePoses[eye]));
-			
-			glm::mat4 normal_v = glm::inverse(headRotate);
+			//vec4 temp = yheadRotate * vec4(displace,0.0f);
+			//displace = vec3(temp.x, temp.y, temp.z);
+
+		
 			glm::mat4 v = glm::inverse(glm::translate(glm::mat4(1.0f), startpos + vec3(0.0f, 0.0f, 0.0f) + displace) * headRotate);
 			glm::vec3 eyepos = glm::make_vec3(&eyePoses[eye].Position.x);
 			glm::mat4 t = glm::translate(glm::mat4(1.0f), startpos+displace);
@@ -874,8 +905,8 @@ protected:
 			//Drawing
 			/*cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
 			cm1l->draw(shaderProgram, v * leftarm * t, _eyeProjections[eye]);
-			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);
-			cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);*/
+			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);*/
+			cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
 			soldier1->moveSoldier(displace);
 			soldier1->rotateSoldier(yheadRotate);
 			soldier1->rotateArm(leftEndPoint, rightEndPoint);
