@@ -55,9 +55,8 @@ void CrystalSoldier::moveSoldier(vec3 displace)
 	
 }
 
-void CrystalSoldier::rotateSoldier(mat4 yRotate) {
-	headRotate = yRotate;
-
+void CrystalSoldier::rotateSoldier(float yAngle) {
+	headRotate = glm::rotate(mat4(1.0f), yAngle, vec3(0.0f, 1.0f, 0.0f));;
 }
 
 void CrystalSoldier::rotateArm(vec3 leftEnd, vec3 rightEnd, GLfloat headAngle) {

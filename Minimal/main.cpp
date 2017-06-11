@@ -664,6 +664,8 @@ public:
 
 	//client init
 	rpc::client *c;
+	float deviceId;
+	float deviceType;
 
 	RiftApp() {
 		using namespace ovr;
@@ -675,7 +677,8 @@ public:
 
 		//Init client
 		c = new rpc::client("localhost", 8080);
-
+		deviceId = c->call("register", 1.0f).as<float>();
+		deviceType = 1.0f;
 		
 		memset(&_sceneLayer, 0, sizeof(ovrLayerEyeFov));
 		_sceneLayer.Header.Type = ovrLayerType_EyeFov;
@@ -868,8 +871,8 @@ protected:
 			if (glm::dot(glm::cross(glm::vec3(0.0f, 0.0f, 1.0f),d3), glm::vec3(0.0f, 1.0f, 0.0f)) < 0) {
 				d =  - d;
 			}
-			glm::mat4 yheadRotate = glm::mat4(1.0f);
-			yheadRotate = glm::rotate(mat4(1.0f), d, vec3(0.0f, 1.0f, 0.0f));
+
+			
 
 		
 			
@@ -909,29 +912,19 @@ protected:
 			glm::vec3 leftEndPoint = glm::vec3(leftHandPose.Position.x, leftHandPose.Position.y, leftHandPose.Position.z);
 			glm::vec3 rightEndPoint = glm::vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z);
 			
-			/*
+			
 			//Send data to server
-			std::vector<float> initPos;
-			initPos.push_back(startpos.x); initPos.push_back(startpos.y); initPos.push_back(startpos.z);
-			std::vector<float> displaceVec;
-			displaceVec.push_back(displace.x); displaceVec.push_back(displace.y); displaceVec.push_back(displace.z);
-			std::vector<float> lArmPos;
-			lArmPos.push_back(leftEndPoint.x); lArmPos.push_back(leftEndPoint.y); lArmPos.push_back(leftEndPoint.z);
-			std::vector<float> rArmPos;
-			rArmPos.push_back(rightEndPoint.x); rArmPos.push_back(rightEndPoint.y); rArmPos.push_back(rightEndPoint.z);
-			
+			if (eye == ovrEye_Left) {
 
-			c->call("setVR", initPos, displaceVec, lArmPos, rArmPos, d);
-			std::vector<vector<float>> vrInfo = c->call("getVR").as<std::vector<vector<float>>>();
-			vector<float> pos = vrInfo[0];
-			cout <<" x: " << pos[0] << " y:" << pos[1] << " z: " << pos[2] << endl;
-			*/
+				std::vector<float> displaceVec;
+				displaceVec.push_back(displace.x); displaceVec.push_back(displace.y); displaceVec.push_back(displace.z);
+				std::vector<float> lArmPos;
+				lArmPos.push_back(leftEndPoint.x); lArmPos.push_back(leftEndPoint.y); lArmPos.push_back(leftEndPoint.z);
+				std::vector<float> rArmPos;
+				rArmPos.push_back(rightEndPoint.x); rArmPos.push_back(rightEndPoint.y); rArmPos.push_back(rightEndPoint.z);
 
-
-			
-		
-
-
+				c->call("set", deviceId, deviceType, displaceVec, lArmPos, rArmPos, d);
+			}
 
 
 
@@ -939,13 +932,30 @@ protected:
 			//Drawing
 			skybox->draw(skyboxShader, glm::inverse(ovr::toGlm(eyePoses[eye])), _eyeProjections[eye]);
 			//skybox->draw(skyboxShader, v, _eyeProjections[eye]);
-			bullet->draw(bulletShader, v, _eyeProjections[eye]);
+			//bullet->draw(bulletShader, v, _eyeProjections[eye]);
 			//cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
 			soldier1->moveSoldier(displace);
-			soldier1->rotateSoldier(yheadRotate);
+			soldier1->rotateSoldier(d);
 			soldier1->rotateArm(leftEndPoint, rightEndPoint, d);
 			//soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
 			soldier1->draw(crystalShader, v, _eyeProjections[eye]);
+
+			vector<vector<float>> soldiersData = c->call("get", deviceId).as<std::vector<vector<float>>>();
+			for (int i = 0; i < soldiersData.size()/5; i++) {
+				int n = 5 * i;
+				vec3 initPos = vec3(soldiersData[n][0], soldiersData[n][1], soldiersData[n][2]);
+				vec3 dis = vec3(soldiersData[n+1][0], soldiersData[n+1][1], soldiersData[n+1][2]);
+				vec3 lArm = vec3(soldiersData[n+2][0], soldiersData[n+2][1], soldiersData[n+2][2]);
+				vec3 rArm = vec3(soldiersData[n + 3][0], soldiersData[n + 3][1], soldiersData[n + 3][2]);
+				float hAngle = soldiersData[n + 4][0];
+				CrystalSoldier s(initPos);
+				s.moveSoldier(dis);
+				s.rotateArm(lArm,rArm,hAngle);
+				s.rotateSoldier(hAngle);
+				s.draw(crystalShader, v, _eyeProjections[eye]);
+			}
+			
+			//cout << " x: " << pos[0] << " y:" << pos[1] << " z: " << pos[2] << endl;
 
 		});
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
