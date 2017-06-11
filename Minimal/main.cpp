@@ -658,14 +658,18 @@ public:
 	ovrPosef leftHandPose;
 	ovrPosef rightHandPose;
 	glm::vec3 lastLeftEndPoint, lastRightEndPoint;
-	glm::vec3 startpos = glm::vec3(0.5f,0.0f,0.5f);
+	glm::vec3 startpos ;
 	glm::vec3 displace = glm::vec3(0.0f,0.0f,0.0f);
+	int maxEnemy = 5;
 	CrystalSoldier *soldier1;
+	vector<CrystalSoldier*> enemies;
 
 	//client init
 	rpc::client *c;
 	float deviceId;
 	float deviceType;
+
+
 
 	RiftApp() {
 		using namespace ovr;
@@ -676,9 +680,12 @@ public:
 		_viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
 
 		//Init client
-		c = new rpc::client("localhost", 8080);
-		deviceId = c->call("register", 1.0f).as<float>();
 		deviceType = 1.0f;
+		c = new rpc::client("192.168.1.24", 8080);
+		vector<vector<float>> rst = c->call("register", deviceType).as<vector<vector<float>>>();
+		deviceId = rst[0][0];
+		startpos = vec3(rst[1][0], rst[1][1], rst[1][2]);
+		
 		
 		memset(&_sceneLayer, 0, sizeof(ovrLayerEyeFov));
 		_sceneLayer.Header.Type = ovrLayerType_EyeFov;
@@ -812,7 +819,11 @@ protected:
 		bullet = new Sphere(0.1f, 100, 100, vec3(0.0, 0.0, -0.2f));
 	
 
-		soldier1 = new CrystalSoldier(startpos);
+		soldier1 = new CrystalSoldier();
+		for (int i = 0; i < maxEnemy; i++) {
+			enemies.push_back(new CrystalSoldier());
+		}
+
 }
 
 	void onKey(int key, int scancode, int action, int mods) override {
@@ -934,13 +945,20 @@ protected:
 			//skybox->draw(skyboxShader, v, _eyeProjections[eye]);
 			//bullet->draw(bulletShader, v, _eyeProjections[eye]);
 			//cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
-			soldier1->moveSoldier(displace);
+			soldier1->moveSoldier(startpos,displace);
 			soldier1->rotateSoldier(d);
 			soldier1->rotateArm(leftEndPoint, rightEndPoint, d);
 			//soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
 			soldier1->draw(crystalShader, v, _eyeProjections[eye]);
 
-			vector<vector<float>> soldiersData = c->call("get", deviceId).as<std::vector<vector<float>>>();
+			
+			vector<vector<float>> soldiersData;
+
+			if (eye == ovrEye_Left) {
+				soldiersData = c->call("get", deviceId).as<std::vector<vector<float>>>();
+			}
+			
+			
 			for (int i = 0; i < soldiersData.size()/5; i++) {
 				int n = 5 * i;
 				vec3 initPos = vec3(soldiersData[n][0], soldiersData[n][1], soldiersData[n][2]);
@@ -948,11 +966,10 @@ protected:
 				vec3 lArm = vec3(soldiersData[n+2][0], soldiersData[n+2][1], soldiersData[n+2][2]);
 				vec3 rArm = vec3(soldiersData[n + 3][0], soldiersData[n + 3][1], soldiersData[n + 3][2]);
 				float hAngle = soldiersData[n + 4][0];
-				CrystalSoldier s(initPos);
-				s.moveSoldier(dis);
-				s.rotateArm(lArm,rArm,hAngle);
-				s.rotateSoldier(hAngle);
-				s.draw(crystalShader, v, _eyeProjections[eye]);
+				enemies[i]->moveSoldier(initPos,dis);
+				enemies[i]->rotateArm(lArm,rArm,hAngle);
+				enemies[i]->rotateSoldier(hAngle);
+				enemies[i]->draw(crystalShader, v, _eyeProjections[eye]);
 			}
 			
 			//cout << " x: " << pos[0] << " y:" << pos[1] << " z: " << pos[2] << endl;

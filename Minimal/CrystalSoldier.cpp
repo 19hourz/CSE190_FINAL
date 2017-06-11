@@ -11,11 +11,10 @@
 using namespace std;
 
 
-CrystalSoldier::CrystalSoldier(vec3 pos)
+CrystalSoldier::CrystalSoldier()
 {
     toWorld = glm::mat4(1.0f);
-	initPos = pos;
-	displaceTrans = glm::translate(glm::mat4(1.0f), pos);
+	displaceTrans = glm::mat4(1.0f);
 	headRotate = mat4(1.0f);
 	armDirRotate = mat4(1.0f);
 	lArmRotate = mat4(1.0f);
@@ -49,7 +48,7 @@ void CrystalSoldier::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
 	lArm->draw(shaderProgram, V  * displaceTrans , P);
 }
 
-void CrystalSoldier::moveSoldier(vec3 displace) 
+void CrystalSoldier::moveSoldier(vec3 initPos, vec3 displace) 
 {
 	displaceTrans = glm::translate(glm::mat4(1.0f), initPos + displace);
 	
