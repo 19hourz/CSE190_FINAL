@@ -288,3 +288,6 @@ __pycache__/
 
 #library files
 *.lib
+
+#project config
+*.sln

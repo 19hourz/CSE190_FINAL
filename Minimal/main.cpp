@@ -594,6 +594,7 @@ public:
 #include "rpc/client.h"
 #include <iostream>
 #include <string>
+#include <vector>
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 #include <cmath>
@@ -661,6 +662,9 @@ public:
 	glm::vec3 displace = glm::vec3(0.0f,0.0f,0.0f);
 	CrystalSoldier *soldier1;
 
+	//client init
+	rpc::client *c;
+
 	RiftApp() {
 		using namespace ovr;
 		RiftApp::buttonA_status = 0;
@@ -669,6 +673,10 @@ public:
 		RiftApp::rThumbStick_val = 0;
 		_viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
 
+		//Init client
+		c = new rpc::client("localhost", 8080);
+
+		
 		memset(&_sceneLayer, 0, sizeof(ovrLayerEyeFov));
 		_sceneLayer.Header.Type = ovrLayerType_EyeFov;
 		_sceneLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
@@ -885,12 +893,12 @@ protected:
 
 		
 			glm::mat4 v = glm::inverse(glm::translate(glm::mat4(1.0f), startpos + vec3(0.0f, 0.0f, 0.0f) + displace) * headRotate);
-			glm::vec3 eyepos = glm::make_vec3(&eyePoses[eye].Position.x);
-			glm::mat4 t = glm::translate(glm::mat4(1.0f), startpos+displace);
+			//glm::vec3 eyepos = glm::make_vec3(&eyePoses[eye].Position.x);
+			//glm::mat4 t = glm::translate(glm::mat4(1.0f), startpos+displace);
 			//glm::mat4 t = mat4(1.0f);
 
-			glm::mat4 leftarm = glm::translate(glm::mat4(1.0f), glm::vec3(-0.3, -0.25, 0.0));
-			glm::mat4 rightarm = glm::translate(glm::mat4(1.0f), glm::vec3(0.3, -0.25, 0.0));
+			//glm::mat4 leftarm = glm::translate(glm::mat4(1.0f), glm::vec3(-0.3, -0.25, 0.0));
+			//glm::mat4 rightarm = glm::translate(glm::mat4(1.0f), glm::vec3(0.3, -0.25, 0.0));
 			glm::mat4 cubePos = glm::scale(mat4(1.0f),vec3(0.2,0.2,0.2)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.3, 0.0, -1.0));
 			
 
@@ -901,14 +909,36 @@ protected:
 			glm::vec3 leftEndPoint = glm::vec3(leftHandPose.Position.x, leftHandPose.Position.y, leftHandPose.Position.z);
 			glm::vec3 rightEndPoint = glm::vec3(rightHandPose.Position.x, rightHandPose.Position.y, rightHandPose.Position.z);
 			
+			/*
+			//Send data to server
+			std::vector<float> initPos;
+			initPos.push_back(startpos.x); initPos.push_back(startpos.y); initPos.push_back(startpos.z);
+			std::vector<float> displaceVec;
+			displaceVec.push_back(displace.x); displaceVec.push_back(displace.y); displaceVec.push_back(displace.z);
+			std::vector<float> lArmPos;
+			lArmPos.push_back(leftEndPoint.x); lArmPos.push_back(leftEndPoint.y); lArmPos.push_back(leftEndPoint.z);
+			std::vector<float> rArmPos;
+			rArmPos.push_back(rightEndPoint.x); rArmPos.push_back(rightEndPoint.y); rArmPos.push_back(rightEndPoint.z);
+			
+
+			c->call("setVR", initPos, displaceVec, lArmPos, rArmPos, d);
+			std::vector<vector<float>> vrInfo = c->call("getVR").as<std::vector<vector<float>>>();
+			vector<float> pos = vrInfo[0];
+			cout <<" x: " << pos[0] << " y:" << pos[1] << " z: " << pos[2] << endl;
+			*/
+
+
+			
+		
+
+
+
+
+
 
 			//Drawing
-			/*cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
-			cm1l->draw(shaderProgram, v * leftarm * t, _eyeProjections[eye]);
-			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);*/
-			
-			//skybox->draw(skyboxShader, glm::inverse(ovr::toGlm(eyePoses[eye])), _eyeProjections[eye]);
-			skybox->draw(skyboxShader, v, _eyeProjections[eye]);
+			skybox->draw(skyboxShader, glm::inverse(ovr::toGlm(eyePoses[eye])), _eyeProjections[eye]);
+			//skybox->draw(skyboxShader, v, _eyeProjections[eye]);
 			bullet->draw(bulletShader, v, _eyeProjections[eye]);
 			//cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
 			soldier1->moveSoldier(displace);
