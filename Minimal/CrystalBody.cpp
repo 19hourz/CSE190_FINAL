@@ -80,7 +80,8 @@ CrystalBody::~CrystalBody()
 }
 
 void CrystalBody::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
-{
+{	
+	/*
 	glDisable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 	glUseProgram(shaderProgram);
@@ -91,7 +92,26 @@ void CrystalBody::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
     glUniformMatrix4fv(uModelview, 1, GL_FALSE, &modelview[0][0]);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, numberIndices*6, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
+    glBindVertexArray(0);*/
+	//glDisable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
+	glUseProgram(shaderProgram);
+	glm::mat4 mvp = P * V  * toWorld;
+	GLuint mvpUniform = glGetUniformLocation(shaderProgram, "MVP");
+	GLuint modelUniform = glGetUniformLocation(shaderProgram, "model");
+	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, &toWorld[0][0]);
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, numberIndices * 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+}
+
+void CrystalBody::rotateBody(glm::mat4 headRotate) {
+
+	toWorld = headRotate;
+	
+
 }
 
 

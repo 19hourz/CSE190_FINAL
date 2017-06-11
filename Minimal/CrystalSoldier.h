@@ -37,7 +37,7 @@ public:
 	CrystalBody *body;
 	vec3 initPos;
 	mat4 displaceTrans;
-	mat4 headRotate, lArmRotate, rArmRotate, rScale, lScale;
+	mat4 headRotate, lArmRotate, rArmRotate, armDirRotate;
 	vec3 initLPoint, initRPoint, initLArm, initRArm;
 
 	glm::mat4 leftArmTrans, rightArmTrans;
@@ -48,7 +48,7 @@ public:
     void draw(GLuint, glm::mat4, glm::mat4);
 	void moveSoldier(vec3 displace);
 	void rotateSoldier(mat4 yRotate);
-	void rotateArm(vec3 leftEnd, vec3 rightEnd);
+	void rotateArm(vec3 leftEnd, vec3 rightEnd, GLfloat headAngle);
     void update();
     
 

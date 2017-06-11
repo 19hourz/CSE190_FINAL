@@ -84,7 +84,8 @@ CrystalArm::~CrystalArm()
 }
 
 void CrystalArm::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
-{
+{   
+	/*
 	glUseProgram(shaderProgram);
     glm::mat4 modelview = V * toWorld;
     uProjection = glGetUniformLocation(shaderProgram, "projection");
@@ -93,7 +94,16 @@ void CrystalArm::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
     glUniformMatrix4fv(uModelview, 1, GL_FALSE, &modelview[0][0]);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, numberIndices*6, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
+    glBindVertexArray(0);*/
+	glUseProgram(shaderProgram);
+	glm::mat4 mvp = P * V  * toWorld;
+	GLuint mvpUniform = glGetUniformLocation(shaderProgram, "MVP");
+	GLuint modelUniform = glGetUniformLocation(shaderProgram, "model");
+	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, &toWorld[0][0]);
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, numberIndices * 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
 void CrystalArm::update()
@@ -101,8 +111,9 @@ void CrystalArm::update()
     //keep still
 }
 
-void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 headRotate, mat4 armRotate, mat4 scale) {
+void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 headRotate, mat4 armRotate, mat4 armDirRotate) {
 
-	toWorld = headRotate * pos * armRotate;
+	toWorld =  headRotate * pos *armDirRotate * armRotate;
+	//toWorld = headRotate * pos ;
 
 }

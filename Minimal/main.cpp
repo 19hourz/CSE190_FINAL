@@ -586,11 +586,12 @@ public:
 };
 
 #include "Cube.h"
+#include "Sphere.h"
 #include "Shader.h"
 #include "CrystalBody.h"
 #include "CrystalArm.h"
 #include "CrystalSoldier.h"
-//#include "rpc/client.h"
+#include "rpc/client.h"
 #include <iostream>
 #include <string>
 #include <Eigen/Geometry>
@@ -599,6 +600,12 @@ public:
 using std::string;
 #define VERTEX_SHADER_PATH ".\\shader.vert"
 #define FRAGMENT_SHADER_PATH ".\\shader.frag"
+#define SKYBOX_VERTEX_SHADER_PATH ".\\skybox.vert"
+#define SKYBOX_FRAGMENT_SHADER_PATH ".\\skybox.frag"
+#define BULLET_VERTEX_SHADER_PATH ".\\bullet.vert"
+#define BULLET_FRAGMENT_SHADER_PATH ".\\bullet.frag"
+#define CRYSTAL_VERTEX_SHADER_PATH ".\\crystal.vert"
+#define CRYSTAL_FRAGMENT_SHADER_PATH ".\\crystal.frag"
 class RiftApp : public GlfwApp, public RiftManagerApp {
 
 private:
@@ -627,8 +634,9 @@ public:
 	ovrEyeType RiftApp::eye;
 	ovrPosef RiftApp::eyePoses[2];
 	GLuint quadVAO, quadVBO;
-	Cube *cube, *skyboxl, *skyboxr, *room;
-	GLint shaderProgram, wireProgram, quadProgram;
+	Cube *cube, *skybox;
+	Sphere *bullet;
+	GLint shaderProgram, skyboxShader, bulletShader, crystalShader;
 	mat4 cubeInitPos;
 	mat4 leftQuadPos, rightQuadPos, floorQuadPos;
 	bool buttonA_pressed;
@@ -641,6 +649,7 @@ public:
 	bool freeze;
 	glm::mat4 projection, headPose[2];
 	GLuint leftwireVAO, leftwireVBO;
+
 	//variables for final projects
 
 	double displayMidpointSeconds = 0.0;
@@ -650,9 +659,6 @@ public:
 	glm::vec3 lastLeftEndPoint, lastRightEndPoint;
 	glm::vec3 startpos = glm::vec3(0.5f,0.0f,0.5f);
 	glm::vec3 displace = glm::vec3(0.0f,0.0f,0.0f);
-	CrystalBody *cb1;
-	CrystalArm *cm1l;
-	CrystalArm *cm1r;
 	CrystalSoldier *soldier1;
 
 	RiftApp() {
@@ -783,14 +789,18 @@ protected:
 		lThumbStick_val = 1.0f;
 		freeze = false;
 		shaderProgram = LoadShaders(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
-
+		skyboxShader = LoadShaders(SKYBOX_VERTEX_SHADER_PATH, SKYBOX_FRAGMENT_SHADER_PATH);
+		bulletShader = LoadShaders(BULLET_VERTEX_SHADER_PATH, BULLET_FRAGMENT_SHADER_PATH);
+		crystalShader = LoadShaders(CRYSTAL_VERTEX_SHADER_PATH, CRYSTAL_FRAGMENT_SHADER_PATH);
 
 		lastLeftEndPoint = vec3(-0.3f, 1.0f, 0.0f);
 		lastRightEndPoint = vec3(0.3f, 1.0f, 0.0f);
-		cb1 = new CrystalBody();
-		cm1l = new CrystalArm();
-		cm1r = new CrystalArm();
+
 		cube = new Cube();
+		skybox = new Cube(0);
+		bullet = new Sphere(0.1f, 100, 100, vec3(0.0, 0.0, -0.2f));
+	
+
 		soldier1 = new CrystalSoldier(startpos);
 }
 
@@ -853,23 +863,13 @@ protected:
 			glm::mat4 yheadRotate = glm::mat4(1.0f);
 			yheadRotate = glm::rotate(mat4(1.0f), d, vec3(0.0f, 1.0f, 0.0f));
 
-			cout << d << endl;
+		
 			
 			if(eye == ovrEye_Left){
 			
 				if (OVR_SUCCESS(ovr_GetInputState(_session, ovrControllerType_Touch, &inputState))) {
 					if (inputState.Thumbstick[ovrHand_Left].x != 0 || inputState.Thumbstick[ovrHand_Left].y != 0) {
-						/*
-						rotateAngle = euler[1] * (180.0f / pi<float>()) - 90.0f;
-						//cout << rotateAngle << endl;
-						mat2 rotateDisplace = mat2(cos(rotateAngle), -sin(rotateAngle), sin(rotateAngle), cos(rotateAngle));
-						cout << rotateAngle << endl;
-						vec2 temp = rotateDisplace *  vec2(inputState.Thumbstick[ovrHand_Left].x, inputState.Thumbstick[ovrHand_Left].y);
-						cout << "x: " << inputState.Thumbstick[ovrHand_Left].x << " y: " << inputState.Thumbstick[ovrHand_Left].y << endl;
-						cout << "x: " << temp.x << " y: " << temp.y << endl;
-						displace.x += temp.x / 150.0f;
-						displace.z += temp.y / 150.0f;
-						*/
+					
 						
 						displace.x += -inputState.Thumbstick[ovrHand_Left].x * glm::sin(d) * 0.01;
 						displace.z += -inputState.Thumbstick[ovrHand_Left].x * glm::cos(d) * 0.01;
@@ -906,11 +906,17 @@ protected:
 			/*cb1->draw(shaderProgram, v * t, _eyeProjections[eye]);
 			cm1l->draw(shaderProgram, v * leftarm * t, _eyeProjections[eye]);
 			cm1r->draw(shaderProgram, v * rightarm * t, _eyeProjections[eye]);*/
-			cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
+			
+			//skybox->draw(skyboxShader, glm::inverse(ovr::toGlm(eyePoses[eye])), _eyeProjections[eye]);
+			skybox->draw(skyboxShader, v, _eyeProjections[eye]);
+			bullet->draw(bulletShader, v, _eyeProjections[eye]);
+			//cube->draw(shaderProgram, v * cubePos , _eyeProjections[eye]);
 			soldier1->moveSoldier(displace);
 			soldier1->rotateSoldier(yheadRotate);
-			soldier1->rotateArm(leftEndPoint, rightEndPoint);
-			soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
+			soldier1->rotateArm(leftEndPoint, rightEndPoint, d);
+			//soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
+			soldier1->draw(crystalShader, v, _eyeProjections[eye]);
+
 		});
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

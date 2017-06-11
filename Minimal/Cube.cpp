@@ -258,6 +258,7 @@ Cube::Cube(int eye) {
 	if(cubeVertices[i] == 0.5f || cubeVertices[i] == -0.5f)
 	cubeVertices[i] = cubeVertices[i] * 100;
 	}
+	
 	GLfloat skyboxVertices[] = {
 		// Positions
 		-10.0f,  10.0f, -10.0f,
@@ -302,6 +303,51 @@ Cube::Cube(int eye) {
 		-10.0f, -10.0f,  10.0f,
 		10.0f, -10.0f,  10.0f
 	};
+	/*
+	GLfloat skyboxVertices[] = {
+		// Positions
+		-50.0f,  50.0f, -50.0f,
+		-50.0f, -50.0f, -50.0f,
+		50.0f, -50.0f, -50.0f,
+		50.0f, -50.0f, -50.0f,
+		50.0f,  50.0f, -50.0f,
+		-50.0f,  50.0f, -50.0f,
+
+		-50.0f, -50.0f,  50.0f,
+		-50.0f, -50.0f, -50.0f,
+		-50.0f,  50.0f, -50.0f,
+		-50.0f,  50.0f, -50.0f,
+		-50.0f,  50.0f,  50.0f,
+		-50.0f, -50.0f,  50.0f,
+
+		50.0f, -50.0f, -50.0f,
+		50.0f, -50.0f,  50.0f,
+		50.0f,  50.0f,  50.0f,
+		50.0f,  50.0f,  50.0f,
+		50.0f,  50.0f, -50.0f,
+		50.0f, -50.0f, -50.0f,
+
+		-50.0f, -50.0f,  50.0f,
+		-50.0f,  50.0f,  50.0f,
+		50.0f,  50.0f,  50.0f,
+		50.0f,  50.0f,  50.0f,
+		50.0f, -50.0f,  50.0f,
+		-50.0f, -50.0f,  50.0f,
+
+		-50.0f,  50.0f, -50.0f,
+		50.0f,  50.0f, -50.0f,
+		50.0f,  50.0f,  50.0f,
+		50.0f,  50.0f,  50.0f,
+		-50.0f,  50.0f,  50.0f,
+		-50.0f,  50.0f, -50.0f,
+
+		-50.0f, -50.0f, -50.0f,
+		-50.0f, -50.0f,  50.0f,
+		50.0f, -50.0f, -50.0f,
+		50.0f, -50.0f, -50.0f,
+		-50.0f, -50.0f,  50.0f,
+		50.0f, -50.0f,  50.0f
+	};*/
 
 	// Setup cube VAO
 	GLuint cubeVBO;
@@ -331,29 +377,15 @@ Cube::Cube(int eye) {
 	// Cubemap (Skybox)
 	std::vector<const GLchar*> faces;
 	if (eye == 0) {
-		faces.push_back("..\\res\\left-ppm\\nx.ppm");
-		faces.push_back("..\\res\\left-ppm\\px.ppm");
-		faces.push_back("..\\res\\left-ppm\\py.ppm");
-		faces.push_back("..\\res\\left-ppm\\ny.ppm");
-		faces.push_back("..\\res\\left-ppm\\nz.ppm");
-		faces.push_back("..\\res\\left-ppm\\pz.ppm");
+		faces.push_back("..\\res\\skybox\\rt.ppm");
+		faces.push_back("..\\res\\skybox\\lf.ppm");
+		faces.push_back("..\\res\\skybox\\up.ppm");
+		faces.push_back("..\\res\\skybox\\dn.ppm");
+		faces.push_back("..\\res\\skybox\\bk.ppm");
+		faces.push_back("..\\res\\skybox\\ft.ppm");
 	}
-	else if (eye == 1){
-		faces.push_back("..\\res\\right-ppm\\nx.ppm");
-		faces.push_back("..\\res\\right-ppm\\px.ppm");
-		faces.push_back("..\\res\\right-ppm\\py.ppm");
-		faces.push_back("..\\res\\right-ppm\\ny.ppm");
-		faces.push_back("..\\res\\right-ppm\\nz.ppm");
-		faces.push_back("..\\res\\right-ppm\\pz.ppm");
-	}
-	else if (eye == 2) {
-		faces.push_back("..\\res\\bedroom\\nx.ppm");
-		faces.push_back("..\\res\\bedroom\\px.ppm");
-		faces.push_back("..\\res\\bedroom\\py.ppm");
-		faces.push_back("..\\res\\bedroom\\ny.ppm");
-		faces.push_back("..\\res\\bedroom\\nz.ppm");
-		faces.push_back("..\\res\\bedroom\\pz.ppm");
-	}
+
+
 
 	skyboxTexture = loadCubemap(faces);
 }

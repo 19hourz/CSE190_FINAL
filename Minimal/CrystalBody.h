@@ -31,6 +31,7 @@ public:
     glm::mat4 toWorld;
     
     void draw(GLuint, glm::mat4, glm::mat4);
+	void rotateBody(glm::mat4 headRotate);
     void update();
     
 
