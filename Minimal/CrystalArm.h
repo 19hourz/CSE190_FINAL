@@ -34,6 +34,7 @@ public:
     void draw(GLuint, glm::mat4, glm::mat4);
     void update();    
 	void rotateArm(glm::mat4 pos, glm::mat4 headRotate, glm::mat4 armRotate, glm::mat4 armDirRotate);
+	glm::vec4 getTopPoint();
     
     GLuint VBO, VAO, EBO, NAO;
     GLuint uProjection, uModelview;

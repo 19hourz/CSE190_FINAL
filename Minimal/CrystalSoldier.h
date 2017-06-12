@@ -38,6 +38,7 @@ public:
 	mat4 displaceTrans;
 	mat4 headRotate, lArmRotate, rArmRotate, armDirRotate;
 	vec3 initLPoint, initRPoint, initLArm, initRArm;
+	vec4 rArmTop, lArmTop;
 
 	glm::mat4 leftArmTrans, rightArmTrans;
 
@@ -48,7 +49,9 @@ public:
 	void moveSoldier(vec3 initPos,vec3 displace);
 	void rotateSoldier(float yAngle);
 	void rotateArm(vec3 leftEnd, vec3 rightEnd, GLfloat headAngle);
-    void update();
+	vec3 getRArmTopPoint();
+	vec3 getLArmTopPoint();
+   
     
 
 };

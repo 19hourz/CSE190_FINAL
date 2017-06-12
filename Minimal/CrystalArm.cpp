@@ -20,14 +20,22 @@ CrystalArm::CrystalArm()
     glm::vec3 normal;
     GLfloat ini_height = -3.0f;
     
-    
+    /*
     GLfloat vertices[5][3] = {
         {0.0f, 0.0f , 0.0f},
         {-0.075f, 0.125f, -0.04f},
         {0.075f, 0.125f, -0.04f},
         {0.0f, 0.125f, 0.085f},
         {0.0f, 0.5f, 0.0f},
-    };
+    };*/
+	GLfloat vertices[5][3] = {
+		{ 0.0f, 0.0f , 0.0f },
+		{ -0.075f, 0.125f, -0.04f },
+		{ 0.075f, 0.125f, -0.04f },
+		{ 0.0f, 0.125f, 0.085f },
+		{ 0.0f, 1.0f, 0.0f },
+	};
+
     
     GLuint indices[6][3] = {
         {0, 1, 2},
@@ -117,3 +125,13 @@ void CrystalArm::rotateArm(glm::mat4 pos, glm::mat4 headRotate, mat4 armRotate, 
 	//toWorld = headRotate * pos ;
 
 }
+
+glm::vec4 CrystalArm::getTopPoint() {
+
+	vec4 t = toWorld * vec4(0.0f, 1.0f, 0.0, 1.0f);
+	return t;
+	//toWorld = headRotate * pos ;
+
+}
+
+

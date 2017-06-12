@@ -22,8 +22,8 @@ CrystalSoldier::CrystalSoldier()
 	rArm = new CrystalArm();
 	lArm = new CrystalArm();
 	body = new CrystalBody();
-	initLPoint = vec3(-0.1f, -0.25f, -0.3f);
-	initRPoint = vec3(0.1f, -0.25f, -0.3f);
+	initLPoint = vec3(-0.1f, -0.25f, 0.0f);
+	initRPoint = vec3(0.1f, -0.25f, 0.0f);
 	//initLArm = initLPoint - vec3(-0.2f, 1.0f, -0.1f);
 	//initRArm = initRPoint - vec3(0.2f, 1.0f, -0.1f);
 	initLArm = vec3(0.0f, 1.0f, 0.0f);
@@ -43,9 +43,13 @@ void CrystalSoldier::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
 	body->rotateBody(headRotate);
 	body->draw(shaderProgram, V * displaceTrans, P);
 	rArm->rotateArm(rightArmTrans, headRotate, rArmRotate, armDirRotate);
+	vec4 rp = rArm->getTopPoint();
 	rArm->draw(shaderProgram, V  * displaceTrans , P);
+	rArmTop = displaceTrans * rp;
 	lArm->rotateArm(leftArmTrans, headRotate, lArmRotate, armDirRotate);
+	vec4 lp = lArm->getTopPoint();
 	lArm->draw(shaderProgram, V  * displaceTrans , P);
+	lArmTop = displaceTrans * lp;
 }
 
 void CrystalSoldier::moveSoldier(vec3 initPos, vec3 displace) 
@@ -78,9 +82,15 @@ void CrystalSoldier::rotateArm(vec3 leftEnd, vec3 rightEnd, GLfloat headAngle) {
 	//cout << length(curLArm) << endl;
 }
 
-
-
-void CrystalSoldier::update()
-{
+vec3 CrystalSoldier::getRArmTopPoint() {
+	return vec3(rArmTop.x, rArmTop.y, rArmTop.z);
 }
+
+vec3 CrystalSoldier::getLArmTopPoint() {
+	return vec3(lArmTop.x, lArmTop.y, lArmTop.z);
+}
+
+
+
+
 

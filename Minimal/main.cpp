@@ -598,6 +598,7 @@ public:
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 #include <cmath>
+#include "rpc\msgpack.hpp"
 using std::string;
 #define VERTEX_SHADER_PATH ".\\shader.vert"
 #define FRAGMENT_SHADER_PATH ".\\shader.frag"
@@ -652,7 +653,7 @@ public:
 	GLuint leftwireVAO, leftwireVBO;
 
 	//variables for final projects
-
+	bool rVibrate, lVibrate;
 	double displayMidpointSeconds = 0.0;
 	float rotateAngle = 0.0f;
 	ovrPosef leftHandPose;
@@ -668,7 +669,8 @@ public:
 	rpc::client *c;
 	float deviceId;
 	float deviceType;
-
+	bool needNextData = true;
+	std::future<RPCLIB_MSGPACK::object_handle> data;
 
 
 	RiftApp() {
@@ -682,6 +684,7 @@ public:
 		//Init client
 		deviceType = 1.0f;
 		c = new rpc::client("192.168.1.24", 8080);
+		//c = new rpc::client("localhost", 8080);
 		vector<vector<float>> rst = c->call("register", deviceType).as<vector<vector<float>>>();
 		deviceId = rst[0][0];
 		startpos = vec3(rst[1][0], rst[1][1], rst[1][2]);
@@ -836,6 +839,23 @@ protected:
 		GlfwApp::onKey(key, scancode, action, mods);
 	}
 
+	bool checkCollision(vec3 armTop, vec3 initPos, vec3 displace) {
+
+		vec3 curPos = initPos + displace;
+	
+		float minX = curPos.x - 0.25;
+		float maxX = curPos.x + 0.25;
+		float minY = curPos.y - 1.0f;
+		float maxY = curPos.y;
+		float maxZ = curPos.z + 0.25f;
+		float minZ = curPos.z - 0.25f;
+		
+		return (armTop.x >= minX && armTop.x <= maxX) &&
+			(armTop.y >= minY && armTop.y <= maxY) &&
+			(armTop.z >= minZ && armTop.z <= maxZ);
+		
+	}
+
 	
 
 	glm::mat4 fromGLfloat16(GLfloat temp[]) {
@@ -843,6 +863,7 @@ protected:
 	}
 
 	void draw() final override {
+
 		ovrPosef eyePoses[2];
 		ovrInputState inputState;
 		ovr_GetEyePoses(_session, frame, true, _viewScaleDesc.HmdToEyeOffset, eyePoses, &_sceneLayer.SensorSampleTime);
@@ -862,6 +883,12 @@ protected:
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		vector<vector<float>> soldiersData;
+		vec3 rTop, lTop;
+		bool rVib = false;
+		bool lVib = false;
+
 		ovr::for_each_eye([&](ovrEyeType eye) {
 			const auto& vp = _sceneLayer.Viewport[eye];
 			glViewport(vp.Pos.x, vp.Pos.y, vp.Size.w, vp.Size.h);
@@ -934,7 +961,7 @@ protected:
 				std::vector<float> rArmPos;
 				rArmPos.push_back(rightEndPoint.x); rArmPos.push_back(rightEndPoint.y); rArmPos.push_back(rightEndPoint.z);
 
-				c->call("set", deviceId, deviceType, displaceVec, lArmPos, rArmPos, d);
+				c->async_call("set", deviceId, deviceType, displaceVec, lArmPos, rArmPos, d);
 			}
 
 
@@ -950,12 +977,20 @@ protected:
 			soldier1->rotateArm(leftEndPoint, rightEndPoint, d);
 			//soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
 			soldier1->draw(crystalShader, v, _eyeProjections[eye]);
+			if (eye == ovrEye_Left) {
+				lTop = soldier1->getLArmTopPoint();
+				rTop = soldier1->getRArmTopPoint();
+			}
+
 
 			
-			vector<vector<float>> soldiersData;
-
-			if (eye == ovrEye_Left) {
-				soldiersData = c->call("get", deviceId).as<std::vector<vector<float>>>();
+			if (needNextData) {
+				data = c->async_call("get", deviceId);
+				needNextData = false;
+			}
+			if (data && data._Is_ready()) {
+				cout << "get data" << endl;
+				soldiersData = data.get().as<std::vector<vector<float>>>();
 			}
 			
 			
@@ -970,6 +1005,12 @@ protected:
 				enemies[i]->rotateArm(lArm,rArm,hAngle);
 				enemies[i]->rotateSoldier(hAngle);
 				enemies[i]->draw(crystalShader, v, _eyeProjections[eye]);
+
+				if (eye == ovrEye_Left) {
+					rVib = rVib || checkCollision(soldier1->getRArmTopPoint(), initPos, dis);
+					lVib = lVib || checkCollision(soldier1->getLArmTopPoint(), initPos, dis);
+				}
+
 			}
 			
 			//cout << " x: " << pos[0] << " y:" << pos[1] << " z: " << pos[2] << endl;
@@ -987,6 +1028,22 @@ protected:
 		glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
 		glBlitFramebuffer(0, 0, _mirrorSize.x, _mirrorSize.y, 0, _mirrorSize.y, _mirrorSize.x, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+		//cout << rVib << endl;
+		
+		if (lVib) {
+			ovr_SetControllerVibration(_session, ovrControllerType_LTouch, 1.0f, 1.0f);
+		}
+		else {
+			ovr_SetControllerVibration(_session, ovrControllerType_LTouch, 1.0f, 0.0f);
+			
+		}
+		if (rVib) {
+			ovr_SetControllerVibration(_session, ovrControllerType_RTouch, 1.0f, 1.0f);
+		}
+		else {
+			ovr_SetControllerVibration(_session, ovrControllerType_RTouch, 1.0f, 0.0f);
+		}
 	}
 
 
