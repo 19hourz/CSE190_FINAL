@@ -671,6 +671,7 @@ public:
 	float deviceType;
 	bool needNextData = true;
 	std::future<RPCLIB_MSGPACK::object_handle> data;
+	vector<vector<float>> soldiersData;
 
 
 	RiftApp() {
@@ -884,10 +885,19 @@ protected:
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		vector<vector<float>> soldiersData;
 		vec3 rTop, lTop;
 		bool rVib = false;
 		bool lVib = false;
+
+		if (needNextData) {
+			data = c->async_call("get", deviceId);
+			needNextData = false;
+		}
+		if (needNextData == false && data._Is_ready()) {
+			//cout << "get data" << endl;
+			soldiersData = data.get().as<std::vector<vector<float>>>();
+			needNextData = true;
+		}
 
 		ovr::for_each_eye([&](ovrEyeType eye) {
 			const auto& vp = _sceneLayer.Viewport[eye];
@@ -910,21 +920,10 @@ protected:
 				d =  - d;
 			}
 
-			
-
-		
-			
 			if(eye == ovrEye_Left){
-			
 				if (OVR_SUCCESS(ovr_GetInputState(_session, ovrControllerType_Touch, &inputState))) {
-					if (inputState.Thumbstick[ovrHand_Left].x != 0 || inputState.Thumbstick[ovrHand_Left].y != 0) {
-					
-						
-						displace.x += -inputState.Thumbstick[ovrHand_Left].x * glm::sin(d) * 0.01;
-						displace.z += -inputState.Thumbstick[ovrHand_Left].x * glm::cos(d) * 0.01;
-						displace.x += -inputState.Thumbstick[ovrHand_Left].y * glm::sin(d) * 0.01;
-						displace.z += -inputState.Thumbstick[ovrHand_Left].y * glm::cos(d) * 0.01;
-					}
+					displace.x += inputState.Thumbstick[ovrHand_Left].x * glm::cos(d) * 0.01 - inputState.Thumbstick[ovrHand_Left].y * glm::sin(d) * 0.01;
+					displace.z += -inputState.Thumbstick[ovrHand_Left].y * glm::cos(d) * 0.01 - inputState.Thumbstick[ovrHand_Left].x * glm::sin(d) * 0.01;
 				}
 			}
 			
@@ -976,23 +975,14 @@ protected:
 			soldier1->rotateSoldier(d);
 			soldier1->rotateArm(leftEndPoint, rightEndPoint, d);
 			//soldier1->draw(shaderProgram, v, _eyeProjections[eye]);
-			soldier1->draw(crystalShader, v, _eyeProjections[eye]);
+			soldier1->draw(crystalShader, v, _eyeProjections[eye], false);
 			if (eye == ovrEye_Left) {
 				lTop = soldier1->getLArmTopPoint();
 				rTop = soldier1->getRArmTopPoint();
 			}
 
 
-			
-			if (needNextData) {
-				data = c->async_call("get", deviceId);
-				needNextData = false;
-			}
-			if (data && data._Is_ready()) {
-				cout << "get data" << endl;
-				soldiersData = data.get().as<std::vector<vector<float>>>();
-			}
-			
+
 			
 			for (int i = 0; i < soldiersData.size()/5; i++) {
 				int n = 5 * i;
@@ -1004,7 +994,7 @@ protected:
 				enemies[i]->moveSoldier(initPos,dis);
 				enemies[i]->rotateArm(lArm,rArm,hAngle);
 				enemies[i]->rotateSoldier(hAngle);
-				enemies[i]->draw(crystalShader, v, _eyeProjections[eye]);
+				enemies[i]->draw(crystalShader, v, _eyeProjections[eye], true);
 
 				if (eye == ovrEye_Left) {
 					rVib = rVib || checkCollision(soldier1->getRArmTopPoint(), initPos, dis);

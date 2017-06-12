@@ -38,10 +38,11 @@ CrystalSoldier::~CrystalSoldier()
  
 }
 
-void CrystalSoldier::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P)
+void CrystalSoldier::draw(GLuint shaderProgram, glm::mat4 V, glm::mat4 P, bool drawBody)
 {	
 	body->rotateBody(headRotate);
-	body->draw(shaderProgram, V * displaceTrans, P);
+	if(drawBody)
+		body->draw(shaderProgram, V * displaceTrans, P);
 	rArm->rotateArm(rightArmTrans, headRotate, rArmRotate, armDirRotate);
 	vec4 rp = rArm->getTopPoint();
 	rArm->draw(shaderProgram, V  * displaceTrans , P);

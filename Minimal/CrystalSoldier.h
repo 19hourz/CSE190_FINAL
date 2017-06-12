@@ -45,7 +45,7 @@ public:
 
     CrystalSoldier();
     ~CrystalSoldier(); 
-    void draw(GLuint, glm::mat4, glm::mat4);
+    void draw(GLuint, glm::mat4, glm::mat4, bool);
 	void moveSoldier(vec3 initPos,vec3 displace);
 	void rotateSoldier(float yAngle);
 	void rotateArm(vec3 leftEnd, vec3 rightEnd, GLfloat headAngle);
