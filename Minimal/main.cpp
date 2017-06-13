@@ -684,8 +684,8 @@ public:
 
 		//Init client
 		deviceType = 1.0f;
-		c = new rpc::client("192.168.1.24", 8080);
-		//c = new rpc::client("localhost", 8080);
+		//c = new rpc::client("192.168.1.24", 8080);
+		c = new rpc::client("localhost", 8080);
 		vector<vector<float>> rst = c->call("register", deviceType).as<vector<vector<float>>>();
 		deviceId = rst[0][0];
 		startpos = vec3(rst[1][0], rst[1][1], rst[1][2]);
